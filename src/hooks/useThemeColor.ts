@@ -20,6 +20,9 @@ const Colors = {
 };
 
 export type ThemeProps = {
+  // Accept both forms: `light`/`dark` (used at call sites) and `lightColor`/`darkColor` (historic/explicit)
+  light?: string;
+  dark?: string;
   lightColor?: string;
   darkColor?: string;
 };
@@ -31,11 +34,15 @@ export function useThemeColor(
   colorName: ColorName
 ) {
   const theme = useColorScheme() ?? 'light';
-  const colorFromProps = props[theme === 'light' ? 'lightColor' : 'darkColor'];
+  // Prefer the shorthand `light`/`dark` if provided, fall back to `lightColor`/`darkColor`.
+  const colorFromProps =
+    theme === 'light'
+      ? props.light ?? props.lightColor
+      : props.dark ?? props.darkColor;
 
   if (colorFromProps) {
     return colorFromProps;
-  } else {
-    return Colors[theme][colorName];
   }
+
+  return Colors[theme][colorName];
 }

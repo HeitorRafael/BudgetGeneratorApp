@@ -1,6 +1,6 @@
 import { StyleSheet, ScrollView, View } from 'react-native';
-import { ThemedText, ThemedView } from './components';
-import { useThemeColor } from './hooks';
+import { ThemedText, ThemedView } from './src/components';
+import { useThemeColor } from './src/hooks';
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 type Feature = {
