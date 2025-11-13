@@ -1,267 +1,184 @@
-# 🚀 Guia de Setup - BudgetGeneratorAPP
+# 🚀 Guia de Sincronização - Para Contribuidores
 
-Para desenvolvedores que vão clonar o repo e rodar na máquina deles.
-
----
-
-## 📋 Pré-requisitos
-
-- **Node.js** 16+ ([baixar](https://nodejs.org/))
-- **PostgreSQL** 12+ ([baixar](https://www.postgresql.org/))
-- **Git**
-- VS Code (recomendado)
+**Para:** Contribuidores  
+**Quando:** Depois de fazer `git pull` e atualizar com as mudanças do dia 13/11/2025
 
 ---
 
-## 1️⃣ Clonar Repositório
+## 📋 O Que Mudou Hoje?
 
-```bash
-git clone https://github.com/AlexsandroFilho/BudgetGeneratorApp.git
-cd BudgetGeneratorApp
-```
+Novos arquivos e features adicionadas:
+- ✨ **Foto de Perfil** - Upload de foto via câmera/galeria
+- 💾 **Persistência de Foto** - Foto salva localmente (AsyncStorage)
+- 📄 **Documentação** - STATUS_PROJETO.md e GUIA_SETUP_USUARIOS.md
+- 🎯 **Perfil como Tab Padrão** - Ao fazer login, começa em Perfil
+
+**Importante:** `BudgetGeneratorWEB/` NÃO está no repositório (ignorado no .gitignore)
 
 ---
 
-## 2️⃣ Setup Backend (Express + PostgreSQL)
+## ✅ Passos Pós-Pull (5 minutos)
 
-### 📁 Navegar para pasta
+### 1️⃣ Sincronizar Código
+
 ```bash
-cd BudgetGeneratorWEB
+git pull origin main
 ```
 
-### 🗄️ Criar Banco de Dados
+**Esperado:** Ver mensagens de arquivos modificados/criados
 
-Abrir terminal PostgreSQL:
-```bash
-psql -U postgres
-```
-
-Dentro do PostgreSQL:
-```sql
-CREATE DATABASE budget_generator;
-CREATE USER postgres WITH PASSWORD 'senha123';
-GRANT ALL PRIVILEGES ON DATABASE budget_generator TO postgres;
-\q
-```
-
-### ⚙️ Configurar .env
-
-Criar arquivo `BudgetGeneratorWEB/.env`:
-
-```dotenv
-PORT=3000
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=budget_generator
-DB_USER=postgres
-DB_PASSWORD=senha123
-JWT_SECRET=sua_chave_secreta_super_segura_aqui_123456
-GEMINI_API_KEY=sua_chave_gemini_aqui
-NODE_ENV=development
-```
-
-### 📦 Instalar Dependências
+### 2️⃣ Instalar Novas Dependências
 
 ```bash
 npm install
 ```
 
-### ▶️ Iniciar Servidor
+**Por quê:** Adicionamos `expo-image-picker` para foto
+
+**Esperado:** Mensagem de sucesso, nenhum erro
+
+### 3️⃣ Limpar Cache Expo
 
 ```bash
-npm start
+npm start -- --clear
 ```
 
-**Esperado**: `Server running on port 3000`
+ou pressione `c` no terminal Expo se já estiver rodando
 
-Testar: `http://localhost:3000/api` deve retornar algo (ou erro 404)
+**Por quê:** Garante que o cache antigo não interfere
+
+### 4️⃣ Recarregar no Celular/Emulador
+
+**No Expo Go (celular):**
+- Escanear novo QR code
+
+**No Emulador:**
+- Pressione `r` para reload completo
+- Se não funcionar: feche e abra de novo
 
 ---
 
-## 3️⃣ Setup Frontend (React Native + Expo)
+## 🔍 Validar Sincronização
 
-### 📁 Voltar para raiz
+Seu app deve estar **100% igual** ao novo:
+
+- [ ] Login funciona
+- [ ] Perfil é a primeira tab (não Orçamentos)
+- [ ] Botão "Editar" aparece no Perfil
+- [ ] Modal de edição tem campos: Email, Senha, Foto
+- [ ] Consegue selecionar foto (Câmera/Galeria)
+- [ ] Foto aparece após selecionar
+- [ ] Logout e Login de novo
+- [ ] Foto ainda está lá (persistência funcionando!)
+
+---
+
+## ⚠️ Troubleshooting Pós-Sincronização
+
+### ❌ "Module not found: expo-image-picker"
 
 ```bash
-cd ..
+npm install expo-image-picker
 ```
 
-### 🔍 Descobrir Seu IP
+Depois reinicie Expo.
 
-**Windows (PowerShell)**:
-```powershell
-ipconfig | findstr IPv4
-```
+### ❌ "App mostra apenas 'Home' no centro"
 
-Procure por algo como: `192.168.15.17` (anote)
-
-### ⚙️ Configurar .env
-
-Criar arquivo `.env` na raiz:
-
-```dotenv
-API_BASE_URL=http://SEU_IP:3000/api
-```
-
-**Exemplo** (se seu IP é 192.168.15.17):
-```dotenv
-API_BASE_URL=http://192.168.15.17:3000/api
-```
-
-### 📦 Instalar Dependências
-
+Você puxou código antigo! Faça:
 ```bash
-npm install
+git pull origin main
 ```
 
-### ▶️ Iniciar Expo
+Certifique-se que `AppStack.tsx` tem a importação correta.
 
-```bash
-npm start
-```
+### ❌ "Network request failed" ao fazer login
 
-**Esperado**: QR code aparece no terminal
+**Solução:**
+1. Pergunte para Heitor qual é o IP da máquina dele (onde backend está rodando)
+2. Atualize seu `.env` com o IP correto:
+   ```dotenv
+   API_BASE_URL=http://IP_DO_HEITOR:3000/api
+   ```
+3. Reinicie Expo
+
+**Como descobrir o IP:**
+- Pergunte ao Heitor: "Qual é seu IP da rede local?"
+- Ou ele pode mandar o resultado de: `ipconfig | findstr IPv4` (Windows)
+
+### ❌ "Permission denied" ao tentar selecionar foto
+
+- Permita acesso à câmera/galeria quando a app pedir
+- Vá em Settings do seu celular/emulador
+- Procure pelas permissões do app Expo Go
+
+### ❌ Foto desaparece após logout/login
+
+Isso **não deve acontecer!** Teste:
+1. Faça login
+2. Adicione uma foto
+3. Clique em "Sair"
+4. Faça login de novo
+5. A foto deve estar lá
+
+Se não estiver:
+- Verificar se tem espaço na memória
+- Reiniciar app completamente
+- Se persiste, avise ao Heitor (pode ser bug)
 
 ---
 
-## 4️⃣ Testar no Celular
+## 📖 Entender o Código Novo
 
-### 📲 Opção 1: Expo Go (Recomendado)
+Leia estes arquivos para entender as mudanças:
 
-1. Instalar app **Expo Go**:
-   - iOS: AppStore
-   - Android: PlayStore
+1. **`src/screens/Home/HomeScreen.tsx`** - Adicionado foto upload e persistência
+   - Função `loadSavedPhoto()` - Carrega foto ao abrir app
+   - Função `savePhotoToStorage()` - Salva foto no AsyncStorage
+   - Função `deleteOldPhoto()` - Remove foto antiga quando nova é adicionada
 
-2. Abrir app
-3. Escanear QR code do terminal
-4. App abre
+2. **`src/navigation/AppStack.tsx`** - Agora importa HomeScreen real
 
-### 🤖 Opção 2: Emulador Android
-
-1. Abrir Android Studio
-2. Criar/abrir emulador
-3. No terminal Expo: Pressionar `a`
-4. App abre automaticamente
-
-### 🍎 Opção 3: Emulador iOS (Mac apenas)
-
-1. Xcode instalado
-2. No terminal Expo: Pressionar `i`
-3. App abre
+3. **`STATUS_PROJETO.md`** - Veja o progresso e o que falta fazer
 
 ---
 
-## 🧪 Testar Funcionalidades
+## 🤝 Se Algo Não Funcionar
 
-### Teste 1: Registrar
-- Clique "Registrar"
-- Nome: `Seu Nome`
-- Email: `seu@email.com`
-- Senha: `qualquersenha`
-- Enviar
-- **Esperado**: Alert de sucesso → HomeScreen
-
-### Teste 2: Logout
-- Clique no botão "Sair"
-- Confirmar
-- **Esperado**: Volta para IntroScreen
-
-### Teste 3: Login
-- Clique "Entrar"
-- Email: `seu@email.com`
-- Senha: `qualquersenha`
-- Enviar
-- **Esperado**: HomeScreen
-
-### Teste 4: Persistência
-- Feche o app completamente
-- Abra novamente
-- **Esperado**: Direto na HomeScreen (sem login novamente)
-
-### Teste 5: Foto de Perfil
-- HomeScreen → Clique "Editar"
-- Clique "Galeria"
-- Selecione uma foto
-- Clique "Salvar"
-- **Esperado**: Foto aparece no perfil
-- Feche o app
-- Abra novamente
-- **Esperado**: Foto ainda lá
+1. Tente os passos novamente (especialmente `npm install`)
+2. Limpe cache: `npm start -- --clear`
+3. Feche app completamente e reabra
+4. Se ainda não funcionar, pergunte ao Heitor!
 
 ---
 
-## ⚠️ Troubleshooting
+## 🎯 Próximos Passos Para Desenvolver
 
-### "Network request failed"
-```
-1. Verificar se backend está rodando (http://localhost:3000)
-2. Verificar IP em .env está correto
-3. Se no celular/emulador, firewall pode estar bloqueando
-   → Permitir porta 3000 no firewall
-4. Tentar novamente
-```
+Agora que está sincronizado, você pode:
 
-### "Cannot find module..."
-```bash
-npm install
-```
+1. **Testar Foto** - Confirme que funciona como esperado
+2. **Explorar o Código** - Entenda como AsyncStorage salva a foto
+3. **Criar Uma Nova Feature** - Baseado no que viu
+4. **Fazer Seu Próprio Commit** - Melhore algo e compartilhe
 
-### "Database connection refused"
-```
-1. PostgreSQL está rodando?
-   Windows: Services → postgresql → Start
-2. Credenciais em .env estão corretas?
-3. Banco foi criado?
-```
-
-### "Port 3000 already in use"
-```powershell
-# Encontrar processo
-netstat -ano | findstr :3000
-
-# Matar processo (substitua PID)
-taskkill /PID 12345 /F
-```
-
-### "Photo upload fails"
-```
-1. Permissão de câmera/galeria foi aceita?
-2. Tentar novamente
-3. Reiniciar app
-```
+**Sugestão:** Leia `STATUS_PROJETO.md` para ver o que precisa ser feito depois!
 
 ---
 
-## 📞 Dúvidas?
+## 📞 Dúvidas Frequentes
 
-- Leia `MINHAS_CONTRIBUICOES.md` para entender o que foi feito
-- Leia `STATUS_PROJETO.md` para ver o que falta
-- Todos os commits têm descrição detalhada no Git
+**P: Preciso do BudgetGeneratorWEB no meu repo?**  
+R: Não! Está ignorado no `.gitignore`. Você só precisa do frontend (React Native).
 
----
+**P: Onde está o backend?**  
+R: Rodando na máquina do Heitor em `http://[IP_DELE]:3000/api`
 
-## ✅ Checklist Final
+**P: Como adiciono uma nova feature?**  
+R: Faça as mudanças → Teste → `git add .` → `git commit -m "..."` → `git push`
 
-Se todos os itens abaixo passam, você conseguiu! ✨
-
-- [ ] Backend rodando em http://localhost:3000
-- [ ] Frontend rodando no Expo (QR visível)
-- [ ] App abre no celular/emulador
-- [ ] Consegue registrar
-- [ ] Consegue fazer login
-- [ ] Token persiste (logout/login)
-- [ ] Consegue adicionar foto
-- [ ] Foto persiste (fechar/abrir app)
+**P: Posso usar branches?**  
+R: Sim! Use `git checkout -b minha-feature` → trabalhe → `git push origin minha-feature` → crie Pull Request
 
 ---
 
-## 🎯 Próximo Passo
-
-Agora que está rodando, você pode:
-
-1. Explorar o código em `src/`
-2. Tentar adicionar novas features
-3. Criar mais commits
-4. Ler `STATUS_PROJETO.md` para saber o que falta
-
-Boa sorte! 🚀
+Boa sincronização! 🚀
