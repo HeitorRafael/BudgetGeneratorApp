@@ -1,8 +1,8 @@
+import { API_BASE_URL } from '@env';
 import { User } from '../context/AuthContext'
 
 // URL do servidor backend
 // Altere para http://192.168.1.100:3000/api quando o servidor estiver em produção
-const API_BASE_URL = 'http://localhost:3000/api'
 const USE_MOCK_API = false // Mude para true para usar mock sem servidor
 
 export interface LoginResponse {
@@ -96,11 +96,11 @@ export const authService = {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ 
-                    name, 
-                    email, 
+                body: JSON.stringify({
+                    name,
+                    email,
                     password,
-                    confirmpassword: password 
+                    confirmpassword: password
                 }),
             })
 
