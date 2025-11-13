@@ -39,10 +39,7 @@ export const IntroScreen = (props: IntroScreenProps) => {
 
   const handleAuthSuccess = () => {
     setModalVisible(false);
-    navigation.reset({
-      index: 0,
-      routes: [{ name: 'Home' }],
-    });
+    // O AppNavigator detectará automaticamente o token e navegará para Home
   };
 
   return (
