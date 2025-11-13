@@ -169,14 +169,12 @@ $RECYCLE.BIN/
 # ------------------------------------
 # 10. DOCUMENTAÇÃO INTERNA (LOCAL ONLY)
 # ------------------------------------
-# Estes arquivos são APENAS para desenvolvimento local
-# NÃO devem ser commitados no repositório
+# MINHAS_CONTRIBUICOES.md - Apenas para seu portfólio pessoal (NÃO commitar)
 MINHAS_CONTRIBUICOES.md
-@RESUMO_FINAL
-@MUDANCAS_PARA_COMMIT
 
 # ------------------------------------
-# 11. REFERÊNCIA DO PROJETO WEB
+# 11. BACKEND (LOCAL ONLY)
 # ------------------------------------
-# Pasta do projeto web não deve ser enviada
+# BudgetGeneratorWEB - Não commitado (contém credenciais sensíveis)
 BudgetGeneratorWEB/
+

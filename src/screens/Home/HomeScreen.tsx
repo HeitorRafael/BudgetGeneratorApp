@@ -1,7 +1,18 @@
-import React, { useState } from 'react'
-import { View, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native'
+import React, { useState, useEffect } from 'react'
+import {
+    View,
+    TouchableOpacity,
+    StyleSheet,
+    ScrollView,
+    Alert,
+    TextInput,
+    Modal,
+    Image,
+} from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
+import * as ImagePicker from 'expo-image-picker'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { ThemedText, ThemedView } from '../../components'
 import { useThemeColor } from '../../hooks'
 import { useAuth } from '../../context/AuthContext'
@@ -11,322 +22,638 @@ import { AppStackParamList } from '../../navigation/AppStack'
 type HomeScreenProps = StackScreenProps<AppStackParamList, 'Home'>
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    backgroundColor: '#BCDBBC',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#a3d5a3',
-  },
-  headerBrand: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#228F2F',
-  },
-  headerActions: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  headerButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    backgroundColor: '#228F2F',
-    borderRadius: 6,
-  },
-  headerButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  content: {
-    flex: 1,
-    padding: 20,
-  },
-  contentRow: {
-    flexDirection: 'row',
-    gap: 16,
-    marginBottom: 20,
-  },
-  profileCard: {
-    flex: 0.35,
-    backgroundColor: '#BCDBBC',
-    borderRadius: 12,
-    padding: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  profileImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: '#fff',
-    marginBottom: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  profileImagePlaceholder: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 60,
-    backgroundColor: '#e0e0e0',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  profileName: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#228F2F',
-    marginBottom: 4,
-    textAlign: 'center',
-  },
-  profileEmail: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  profileButton: {
-    backgroundColor: '#228F2F',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 6,
-    width: '100%',
-    marginBottom: 8,
-  },
-  profileButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  budgetsCard: {
-    flex: 0.65,
-    backgroundColor: '#BCDBBC',
-    borderRadius: 12,
-    padding: 16,
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#228F2F',
-    marginBottom: 12,
-  },
-  budgetsList: {
-    flex: 1,
-  },
-  budgetItem: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 8,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  budgetItemText: {
-    flex: 1,
-    fontSize: 14,
-    color: '#333',
-  },
-  budgetItemEmpty: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  budgetItemEmptyText: {
-    fontSize: 14,
-    color: '#999',
-  },
-  emptyState: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    flex: 1,
-  },
-  editFormContainer: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    display: 'none',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginBottom: 12,
-    fontSize: 14,
-  },
-  formButtons: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  formButton: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 6,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  formButtonSave: {
-    backgroundColor: '#228F2F',
-  },
-  formButtonCancel: {
-    backgroundColor: '#999',
-  },
-  formButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 14,
-  },
+    container: {
+        flex: 1,
+    },
+    header: {
+        backgroundColor: '#BCDBBC',
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        borderBottomWidth: 2,
+        borderBottomColor: '#a3d5a3',
+    },
+    headerBrand: {
+        fontSize: 22,
+        fontWeight: '700',
+        color: '#228F2F',
+    },
+    headerActions: {
+        flexDirection: 'row',
+        gap: 8,
+    },
+    headerButton: {
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        backgroundColor: '#113815',
+        borderRadius: 6,
+    },
+    headerButtonText: {
+        color: '#fff',
+        fontSize: 12,
+        fontWeight: '600',
+    },
+    content: {
+        flex: 1,
+        paddingHorizontal: 16,
+        paddingTop: 16,
+    },
+    profileCard: {
+        backgroundColor: '#BCDBBC',
+        borderRadius: 12,
+        padding: 16,
+        marginBottom: 16,
+        alignItems: 'center',
+        elevation: 3,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+    },
+    profileImage: {
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        backgroundColor: '#fff',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 12,
+        borderWidth: 3,
+        borderColor: '#228F2F',
+        overflow: 'hidden',
+    },
+    profileImagePhoto: {
+        width: '100%',
+        height: '100%',
+    },
+    profileName: {
+        fontSize: 20,
+        fontWeight: '700',
+        color: '#228F2F',
+        marginBottom: 4,
+    },
+    profileEmail: {
+        fontSize: 13,
+        color: '#555',
+        marginBottom: 12,
+    },
+    profileButtonGroup: {
+        flexDirection: 'row',
+        gap: 8,
+        width: '100%',
+    },
+    profileButton: {
+        flex: 1,
+        backgroundColor: '#228F2F',
+        paddingVertical: 10,
+        borderRadius: 8,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    profileButtonText: {
+        color: '#fff',
+        fontSize: 12,
+        fontWeight: '600',
+    },
+    budgetsContainer: {
+        backgroundColor: '#BCDBBC',
+        borderRadius: 12,
+        padding: 12,
+        flex: 1,
+        marginBottom: 80,
+    },
+    budgetItem: {
+        backgroundColor: '#fff',
+        borderRadius: 8,
+        padding: 12,
+        marginBottom: 10,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.08,
+        shadowRadius: 3,
+    },
+    budgetItemContent: {
+        flex: 1,
+    },
+    budgetItemTitle: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#228F2F',
+        marginBottom: 2,
+    },
+    budgetItemDate: {
+        fontSize: 12,
+        color: '#999',
+    },
+    budgetItemAction: {
+        flexDirection: 'row',
+        gap: 8,
+    },
+    budgetEmpty: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        flex: 1,
+    },
+    budgetEmptyText: {
+        fontSize: 14,
+        color: '#999',
+        textAlign: 'center',
+    },
+    bottomNav: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        backgroundColor: '#BCDBBC',
+        flexDirection: 'row',
+        borderTopWidth: 1,
+        borderTopColor: '#a3d5a3',
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+    },
+    navItem: {
+        flex: 1,
+        paddingVertical: 12,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderTopWidth: 3,
+        borderTopColor: 'transparent',
+    },
+    navItemActive: {
+        borderTopColor: '#228F2F',
+    },
+    navText: {
+        fontSize: 11,
+        fontWeight: '600',
+        color: '#666',
+        marginTop: 4,
+    },
+    navTextActive: {
+        color: '#228F2F',
+    },
+    editModal: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'flex-end',
+    },
+    editModalContent: {
+        backgroundColor: '#fff',
+        borderTopLeftRadius: 16,
+        borderTopRightRadius: 16,
+        padding: 20,
+        maxHeight: '90%',
+    },
+    editModalTitle: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: '#228F2F',
+        marginBottom: 16,
+    },
+    photoSection: {
+        alignItems: 'center',
+        marginBottom: 20,
+        paddingBottom: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: '#eee',
+    },
+    photoPreview: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        backgroundColor: '#BCDBBC',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 12,
+        borderWidth: 2,
+        borderColor: '#228F2F',
+        overflow: 'hidden',
+    },
+    photoPreviewImage: {
+        width: '100%',
+        height: '100%',
+    },
+    photoButtonGroup: {
+        flexDirection: 'row',
+        gap: 8,
+        width: '100%',
+    },
+    photoButton: {
+        flex: 1,
+        paddingVertical: 8,
+        paddingHorizontal: 12,
+        backgroundColor: '#f0f0f0',
+        borderRadius: 6,
+        justifyContent: 'center',
+        alignItems: 'center',
+        flexDirection: 'row',
+        gap: 6,
+    },
+    photoButtonText: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: '#333',
+    },
+    input: {
+        borderWidth: 1,
+        borderColor: '#ddd',
+        borderRadius: 8,
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        marginBottom: 12,
+        fontSize: 14,
+        backgroundColor: '#fff',
+    },
+    inputFocused: {
+        borderColor: '#228F2F',
+    },
+    inputLabel: {
+        fontSize: 12,
+        color: '#666',
+        marginBottom: 8,
+        fontWeight: '600',
+    },
+    formButtons: {
+        flexDirection: 'row',
+        gap: 8,
+        marginTop: 16,
+    },
+    formButton: {
+        flex: 1,
+        paddingVertical: 12,
+        borderRadius: 8,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    formButtonSave: {
+        backgroundColor: '#228F2F',
+    },
+    formButtonCancel: {
+        backgroundColor: '#ddd',
+    },
+    formButtonText: {
+        fontWeight: '600',
+        fontSize: 14,
+    },
+    formButtonSaveText: {
+        color: '#fff',
+    },
+    formButtonCancelText: {
+        color: '#333',
+    },
+    ctaButton: {
+        backgroundColor: '#228F2F',
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: 8,
+        marginTop: 12,
+        width: '100%',
+    },
+    ctaButtonText: {
+        color: '#fff',
+        fontWeight: '600',
+        fontSize: 14,
+        textAlign: 'center',
+    },
 })
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
-  const [showEditForm, setShowEditForm] = useState(false)
-  const [budgets, setBudgets] = useState<any[]>([])
-  const primaryColor = useThemeColor({}, 'primary')
-  const backgroundColor = useThemeColor({}, 'background')
-  const insets = useSafeAreaInsets()
-  const { user, logout } = useAuth()
+    const [activeTab, setActiveTab] = useState<'perfil' | 'orcamentos'>('perfil')
+    const [showEditModal, setShowEditModal] = useState(false)
+    const [editEmail, setEditEmail] = useState('')
+    const [editPassword, setEditPassword] = useState('')
+    const [profilePhoto, setProfilePhoto] = useState<string | null>(null)
+    const [focusedInput, setFocusedInput] = useState<string | null>(null)
+    const [budgets, setBudgets] = useState<any[]>([])
 
-  const handleLogout = async () => {
-    Alert.alert('Sair', 'Deseja realmente sair?', [
-      {
-        text: 'Cancelar',
-        onPress: () => {},
-        style: 'cancel',
-      },
-      {
-        text: 'Sair',
-        onPress: async () => {
-          await logout()
-        },
-        style: 'destructive',
-      },
-    ])
-  }
+    const primaryColor = useThemeColor({}, 'primary')
+    const backgroundColor = useThemeColor({}, 'background')
+    const insets = useSafeAreaInsets()
+    const { user, logout } = useAuth()
 
-  const handleGenerateBudget = () => {
-    navigation.navigate('Orcamentos')
-  }
+    // Carregar foto salva ao montar o componente
+    useEffect(() => {
+        loadSavedPhoto()
+    }, [user?.id])
 
-  return (
-    <ThemedView style={[styles.container, { backgroundColor }]}>
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-        <ThemedText style={styles.headerBrand}>BudgetGenerator</ThemedText>
-        <View style={styles.headerActions}>
-          <TouchableOpacity style={styles.headerButton} onPress={handleGenerateBudget}>
-            <ThemedText style={styles.headerButtonText}>Gerar Orçamento</ThemedText>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.headerButton} onPress={handleLogout}>
-            <ThemedText style={styles.headerButtonText}>Sair</ThemedText>
-          </TouchableOpacity>
-        </View>
-      </View>
+    const loadSavedPhoto = async () => {
+        try {
+            const photoPath = await AsyncStorage.getItem(`userPhoto_${user?.id}`)
+            if (photoPath) {
+                setProfilePhoto(photoPath)
+            }
+        } catch (error) {
+            console.error('Erro ao carregar foto:', error)
+        }
+    }
 
-      {/* Content */}
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.contentRow}>
-          {/* Profile Card */}
-          <View style={styles.profileCard}>
-            <View style={styles.profileImage}>
-              <View style={styles.profileImagePlaceholder}>
-                <Ionicons name="person-circle" size={80} color="#999" />
-              </View>
-            </View>
-            <ThemedText style={styles.profileName}>{user?.name || 'Usuário'}</ThemedText>
-            <ThemedText style={styles.profileEmail}>{user?.email || 'email@example.com'}</ThemedText>
+    const deleteOldPhoto = async () => {
+        try {
+            await AsyncStorage.removeItem(`userPhoto_${user?.id}`)
+        } catch (error) {
+            console.error('Erro ao deletar foto antiga:', error)
+        }
+    }
 
-            {!showEditForm && (
-              <TouchableOpacity
-                style={styles.profileButton}
-                onPress={() => setShowEditForm(true)}
-              >
-                <ThemedText style={styles.profileButtonText}>Alterar Dados</ThemedText>
-              </TouchableOpacity>
-            )}
-          </View>
+    const savePhotoToStorage = async (photoUri: string) => {
+        try {
+            // Deletar foto antiga primeiro
+            await deleteOldPhoto()
 
-          {/* Budgets Card */}
-          <View style={styles.budgetsCard}>
-            <ThemedText style={styles.cardTitle}>Orçamentos Gerados</ThemedText>
-            {budgets.length === 0 ? (
-              <View style={styles.budgetItemEmpty}>
-                <ThemedText style={styles.budgetItemEmptyText}>
-                  Nenhum orçamento encontrado.
-                </ThemedText>
-              </View>
-            ) : (
-              <ScrollView style={styles.budgetsList}>
-                {budgets.map((budget, index) => (
-                  <View key={index} style={styles.budgetItem}>
-                    <ThemedText style={styles.budgetItemText}>
-                      {budget.name}
-                    </ThemedText>
-                    <TouchableOpacity>
-                      <Ionicons name="chevron-forward" size={20} color="#228F2F" />
+            // Salvar novo URI no AsyncStorage
+            await AsyncStorage.setItem(`userPhoto_${user?.id}`, photoUri)
+            setProfilePhoto(photoUri)
+        } catch (error) {
+            console.error('Erro ao salvar foto:', error)
+            Alert.alert('Erro', 'Não foi possível salvar a foto')
+        }
+    }
+
+    const handleLogout = () => {
+        Alert.alert('Sair', 'Deseja realmente sair?', [
+            { text: 'Cancelar', style: 'cancel' },
+            {
+                text: 'Sair',
+                onPress: async () => {
+                    await logout()
+                },
+                style: 'destructive',
+            },
+        ])
+    }
+
+    const handleGenerateBudget = () => {
+        navigation.navigate('Orcamentos')
+    }
+
+    const pickImageFromGallery = async () => {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
+        if (status !== 'granted') {
+            Alert.alert('Permissão negada', 'É necessário permissão para acessar a galeria')
+            return
+        }
+
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 0.8,
+        })
+
+        if (!result.canceled && result.assets[0]) {
+            await savePhotoToStorage(result.assets[0].uri)
+        }
+    }
+
+    const takePhotoWithCamera = async () => {
+        const { status } = await ImagePicker.requestCameraPermissionsAsync()
+        if (status !== 'granted') {
+            Alert.alert('Permissão negada', 'É necessário permissão para usar a câmera')
+            return
+        }
+
+        const result = await ImagePicker.launchCameraAsync({
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 0.8,
+        })
+
+        if (!result.canceled && result.assets[0]) {
+            await savePhotoToStorage(result.assets[0].uri)
+        }
+    }
+
+    const handleSaveProfile = () => {
+        // TODO: Implementar API call para salvar dados + upload de foto
+        Alert.alert('Sucesso', 'Dados atualizados com sucesso!')
+        setShowEditModal(false)
+        setEditEmail('')
+        setEditPassword('')
+    }
+
+    const renderPerfilTab = () => (
+        <ScrollView showsVerticalScrollIndicator={false}>
+            <View style={styles.profileCard}>
+                <View style={styles.profileImage}>
+                    {profilePhoto ? (
+                        <Image source={{ uri: profilePhoto }} style={styles.profileImagePhoto} />
+                    ) : (
+                        <Ionicons name="person-circle" size={90} color="#228F2F" />
+                    )}
+                </View>
+                <ThemedText style={styles.profileName}>{user?.name || 'Usuário'}</ThemedText>
+                <ThemedText style={styles.profileEmail}>{user?.email || 'email@example.com'}</ThemedText>
+
+                <View style={styles.profileButtonGroup}>
+                    <TouchableOpacity
+                        style={[styles.profileButton, { backgroundColor: '#228F2F' }]}
+                        onPress={() => setShowEditModal(true)}
+                    >
+                        <Ionicons name="pencil" size={16} color="#fff" />
+                        <ThemedText style={[styles.profileButtonText, { marginTop: 2 }]}>
+                            Editar
+                        </ThemedText>
                     </TouchableOpacity>
-                  </View>
-                ))}
-              </ScrollView>
-            )}
-          </View>
+                    <TouchableOpacity
+                        style={[styles.profileButton, { backgroundColor: '#ff6b6b' }]}
+                        onPress={handleLogout}
+                    >
+                        <Ionicons name="log-out" size={16} color="#fff" />
+                        <ThemedText style={[styles.profileButtonText, { marginTop: 2 }]}>Sair</ThemedText>
+                    </TouchableOpacity>
+                </View>
+            </View>
+
+            <TouchableOpacity style={styles.ctaButton} onPress={handleGenerateBudget}>
+                <ThemedText style={styles.ctaButtonText}>➕ Gerar Novo Orçamento</ThemedText>
+            </TouchableOpacity>
+        </ScrollView>
+    )
+
+    const renderOrcamentosTab = () => (
+        <View style={{ flex: 1 }}>
+            <View style={styles.budgetsContainer}>
+                {budgets.length === 0 ? (
+                    <View style={styles.budgetEmpty}>
+                        <Ionicons name="document-outline" size={48} color="#ccc" />
+                        <ThemedText style={styles.budgetEmptyText}>Nenhum orçamento gerado</ThemedText>
+                        <ThemedText style={[styles.budgetEmptyText, { marginTop: 8 }]}>
+                            Clique no botão abaixo para criar o seu primeiro orçamento
+                        </ThemedText>
+                    </View>
+                ) : (
+                    <ScrollView showsVerticalScrollIndicator={false}>
+                        {budgets.map((budget, index) => (
+                            <View key={index} style={styles.budgetItem}>
+                                <View style={styles.budgetItemContent}>
+                                    <ThemedText style={styles.budgetItemTitle}>{budget.name}</ThemedText>
+                                    <ThemedText style={styles.budgetItemDate}>
+                                        {new Date(budget.date || Date.now()).toLocaleDateString('pt-BR')}
+                                    </ThemedText>
+                                </View>
+                                <View style={styles.budgetItemAction}>
+                                    <TouchableOpacity>
+                                        <Ionicons name="eye" size={20} color="#228F2F" />
+                                    </TouchableOpacity>
+                                    <TouchableOpacity>
+                                        <Ionicons name="trash" size={20} color="#ff6b6b" />
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                        ))}
+                    </ScrollView>
+                )}
+            </View>
+
+            <TouchableOpacity
+                style={[styles.ctaButton, { marginBottom: 70 }]}
+                onPress={handleGenerateBudget}
+            >
+                <ThemedText style={styles.ctaButtonText}>➕ Gerar Novo Orçamento</ThemedText>
+            </TouchableOpacity>
         </View>
+    )
 
-        {/* Edit Form */}
-        {showEditForm && (
-          <View style={[styles.editFormContainer, { display: 'flex' }]}>
-            <ThemedText style={{ fontSize: 16, fontWeight: '600', marginBottom: 12 }}>
-              Alterar Dados
-            </ThemedText>
-
-            {/* Email Input */}
-            <View style={styles.input}>
-              <ThemedText style={{ fontSize: 12, color: '#666', marginBottom: 4 }}>
-                Novo e-mail
-              </ThemedText>
-              {/* TODO: Implementar input de email */}
+    return (
+        <ThemedView style={[styles.container, { backgroundColor }]}>
+            {/* Header */}
+            <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
+                <ThemedText style={styles.headerBrand}>BudgetGenerator</ThemedText>
+                <View style={styles.headerActions}>
+                    <TouchableOpacity style={styles.headerButton} onPress={handleGenerateBudget}>
+                        <ThemedText style={styles.headerButtonText}>Novo</ThemedText>
+                    </TouchableOpacity>
+                </View>
             </View>
 
-            {/* Password Input */}
-            <View style={styles.input}>
-              <ThemedText style={{ fontSize: 12, color: '#666', marginBottom: 4 }}>
-                Nova senha
-              </ThemedText>
-              {/* TODO: Implementar input de senha */}
+            {/* Content */}
+            <View style={styles.content}>
+                {activeTab === 'perfil' ? renderPerfilTab() : renderOrcamentosTab()}
             </View>
 
-            {/* Form Buttons */}
-            <View style={styles.formButtons}>
-              <TouchableOpacity
-                style={[styles.formButton, styles.formButtonSave]}
-                onPress={() => {
-                  // TODO: Implementar salvar dados
-                  setShowEditForm(false)
-                }}
-              >
-                <ThemedText style={styles.formButtonText}>Salvar</ThemedText>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.formButton, styles.formButtonCancel]}
-                onPress={() => setShowEditForm(false)}
-              >
-                <ThemedText style={styles.formButtonText}>Cancelar</ThemedText>
-              </TouchableOpacity>
+            {/* Bottom Navigation */}
+            <View style={[styles.bottomNav, { paddingBottom: insets.bottom }]}>
+                <TouchableOpacity
+                    style={[styles.navItem, activeTab === 'perfil' && styles.navItemActive]}
+                    onPress={() => setActiveTab('perfil')}
+                >
+                    <Ionicons
+                        name="person"
+                        size={24}
+                        color={activeTab === 'perfil' ? '#228F2F' : '#666'}
+                    />
+                    <ThemedText style={[styles.navText, activeTab === 'perfil' && styles.navTextActive]}>
+                        Perfil
+                    </ThemedText>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    style={[styles.navItem, activeTab === 'orcamentos' && styles.navItemActive]}
+                    onPress={() => setActiveTab('orcamentos')}
+                >
+                    <Ionicons
+                        name="document-text"
+                        size={24}
+                        color={activeTab === 'orcamentos' ? '#228F2F' : '#666'}
+                    />
+                    <ThemedText style={[styles.navText, activeTab === 'orcamentos' && styles.navTextActive]}>
+                        Orçamentos
+                    </ThemedText>
+                </TouchableOpacity>
             </View>
-          </View>
-        )}
-      </ScrollView>
-    </ThemedView>
-  )
+
+            {/* Edit Modal */}
+            <Modal visible={showEditModal} transparent animationType="slide">
+                <View style={styles.editModal}>
+                    <View style={styles.editModalContent}>
+                        <ScrollView showsVerticalScrollIndicator={false}>
+                            <ThemedText style={styles.editModalTitle}>Alterar Dados da Conta</ThemedText>
+
+                            {/* Foto Section */}
+                            <View style={styles.photoSection}>
+                                <View style={styles.photoPreview}>
+                                    {profilePhoto ? (
+                                        <Image source={{ uri: profilePhoto }} style={styles.photoPreviewImage} />
+                                    ) : (
+                                        <Ionicons name="image-outline" size={40} color="#999" />
+                                    )}
+                                </View>
+
+                                <View style={styles.photoButtonGroup}>
+                                    <TouchableOpacity style={styles.photoButton} onPress={takePhotoWithCamera}>
+                                        <Ionicons name="camera" size={14} color="#333" />
+                                        <ThemedText style={styles.photoButtonText}>Câmera</ThemedText>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity style={styles.photoButton} onPress={pickImageFromGallery}>
+                                        <Ionicons name="image" size={14} color="#333" />
+                                        <ThemedText style={styles.photoButtonText}>Galeria</ThemedText>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+
+                            {/* Email Input */}
+                            <ThemedText style={styles.inputLabel}>Novo E-mail</ThemedText>
+                            <TextInput
+                                style={[
+                                    styles.input,
+                                    focusedInput === 'email' && styles.inputFocused,
+                                ]}
+                                placeholder="Digite o novo e-mail"
+                                placeholderTextColor="#999"
+                                keyboardType="email-address"
+                                value={editEmail}
+                                onChangeText={setEditEmail}
+                                onFocus={() => setFocusedInput('email')}
+                                onBlur={() => setFocusedInput(null)}
+                            />
+
+                            {/* Password Input */}
+                            <ThemedText style={styles.inputLabel}>Nova Senha (deixe em branco para não alterar)</ThemedText>
+                            <TextInput
+                                style={[
+                                    styles.input,
+                                    focusedInput === 'password' && styles.inputFocused,
+                                ]}
+                                placeholder="Digite a nova senha"
+                                placeholderTextColor="#999"
+                                secureTextEntry
+                                value={editPassword}
+                                onChangeText={setEditPassword}
+                                onFocus={() => setFocusedInput('password')}
+                                onBlur={() => setFocusedInput(null)}
+                            />
+
+                            {/* Form Buttons */}
+                            <View style={styles.formButtons}>
+                                <TouchableOpacity
+                                    style={[styles.formButton, styles.formButtonSave]}
+                                    onPress={handleSaveProfile}
+                                >
+                                    <ThemedText style={[styles.formButtonText, styles.formButtonSaveText]}>
+                                        Salvar
+                                    </ThemedText>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={[styles.formButton, styles.formButtonCancel]}
+                                    onPress={() => setShowEditModal(false)}
+                                >
+                                    <ThemedText style={[styles.formButtonText, styles.formButtonCancelText]}>
+                                        Cancelar
+                                    </ThemedText>
+                                </TouchableOpacity>
+                            </View>
+                        </ScrollView>
+                    </View>
+                </View>
+            </Modal>
+        </ThemedView>
+    )
 }
