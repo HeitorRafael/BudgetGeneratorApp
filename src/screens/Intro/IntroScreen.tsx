@@ -1,12 +1,15 @@
 // src/screens/Intro/IntroScreen.tsx
 
 import { ScrollView, View, TouchableOpacity } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context'; // Importar useSafeAreaInsets
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useState } from 'react';
 
 // Componentes e Hooks
 import { ThemedText, ThemedView } from '../../components'; 
 import { useThemeColor } from '../../hooks';
-import { FeatureBox } from '../../components/FeatureBox'; 
+import { useAuth } from '../../context/AuthContext';
+import { FeatureBox } from '../../components/FeatureBox';
+import { AuthModal } from './components/AuthModal';
 
 // Dados e Estilos
 import { mainFeatures, secondaryFeatures } from './IntroData'; 
@@ -20,6 +23,8 @@ type IntroScreenProps = StackScreenProps<RootStackParamList, 'Intro'>;
 
 export const IntroScreen = (props: IntroScreenProps) => { 
   const { navigation } = props;
+  const [modalVisible, setModalVisible] = useState(false);
+  const { isLoading } = useAuth();
     
   const primaryColor = useThemeColor({}, 'primary');
   const buttonColor = useThemeColor({}, 'button');
@@ -29,7 +34,15 @@ export const IntroScreen = (props: IntroScreenProps) => {
   const insets = useSafeAreaInsets();
   
   const handleStart = () => {
-    console.log("Navegar para Login");
+    setModalVisible(true);
+  };
+
+  const handleAuthSuccess = () => {
+    setModalVisible(false);
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'Home' }],
+    });
   };
 
   return (
@@ -68,6 +81,13 @@ export const IntroScreen = (props: IntroScreenProps) => {
         </View>
 
       </ScrollView>
+
+      <AuthModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        onLoginSuccess={handleAuthSuccess}
+        isLoading={isLoading}
+      />
     </ThemedView>
   );
 };
