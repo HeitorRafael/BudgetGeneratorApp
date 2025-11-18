@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
     Modal,
     View,
@@ -12,6 +12,7 @@ import {
     Alert,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { ThemedText } from '../../../components'
 import { useThemeColor } from '../../../hooks'
 import { useAuth } from '../../../context/AuthContext'
@@ -134,12 +135,34 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     const primaryColor = useThemeColor({}, 'primary')
     const { login, register } = useAuth()
 
+    useEffect(() => {
+        const loadRememberedEmail = async () => {
+            if (visible) {
+                try {
+                    const rememberedEmail = await AsyncStorage.getItem('rememberedEmail');
+                    if (rememberedEmail) {
+                        setLoginEmail(rememberedEmail);
+                        setRememberMe(true);
+                    }
+                } catch (e) {
+                    console.error("Failed to load remembered email.", e);
+                }
+            }
+        };
+        loadRememberedEmail();
+    }, [visible]);
+
     const handleLogin = async () => {
         if (!loginEmail || !loginPassword) {
             Alert.alert('Erro', 'Preencha email e senha')
             return
         }
         try {
+            if (rememberMe) {
+                await AsyncStorage.setItem('rememberedEmail', loginEmail);
+            } else {
+                await AsyncStorage.removeItem('rememberedEmail');
+            }
             await login(loginEmail, loginPassword)
             onLoginSuccess()
         } catch (error) {
